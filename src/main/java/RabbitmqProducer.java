@@ -9,15 +9,31 @@ import java.util.concurrent.TimeoutException;
  * Inspired by https://www.rabbitmq.com/tutorials/tutorial-one-java.html
  */
 class RabbitmqProducer {
+        //Set rmq queue name
         private final static String QUEUE_NAME = "hello";
         static void Send(String msg) throws java.io.IOException, TimeoutException {
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost("localhost");
-            Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel();
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-            //String message = "Hello World!";
-            channel.basicPublish("", QUEUE_NAME, null, msg.getBytes());
-            System.out.println(" [x] Sent '" + msg + "'");
+            try {
+                //init rmq-client
+                ConnectionFactory factory = new ConnectionFactory();
+                //set rmq host
+                factory.setHost("localhost");
+                // make connection
+                Connection connection = factory.newConnection();
+                Channel channel = connection.createChannel();
+                // Declare queue. This is idempotent - no error occurres if queue already exists
+                channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+                //Put message
+                channel.basicPublish("", QUEUE_NAME, null, msg.getBytes());
+                //Report about that
+                System.out.println(" [x] Sent '" + msg + "'");
+                //Close channel and connection
+                //We do it after every message
+                channel.close();
+                connection.close();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
 }
